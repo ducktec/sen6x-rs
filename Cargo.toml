@@ -27,21 +27,24 @@ documentation = "https://docs.rs/sen6x"
 embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
 log = "0.4.26"
-embedded-hal-mock = { version = "0.11.1", optional = true }
+embedded-hal-mock = { version = "0.11.1", optional = true, features = [
+    "embedded-hal-async",
+] }
 crc = { version = "3.2.1", optional = true }
+futures = { version = "0.3.31", optional = true }
 
 [target.'cfg(all(target_arch = "arm"))'.dev-dependencies]
 linux-embedded-hal = "0.4.0"
 
 [features]
-default = ["sen66", "unittesting"]
+default = ["sen66", "unittesting", "async"]
 async = []
 sen60 = []
 sen63c = []
 sen65 = []
 sen66 = []
 sen68 = []
-unittesting = ["dep:embedded-hal-mock", "dep:crc"]
+unittesting = ["dep:embedded-hal-mock", "dep:crc", "dep:futures"]
 
 [package.metadata.docs.rs]
 # Show async feature on docs.rs as well

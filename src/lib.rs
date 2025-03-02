@@ -45,7 +45,7 @@
 use crc_internal::CrcError;
 
 #[cfg(feature = "async")]
-pub mod r#async;
+pub mod asynchronous;
 
 pub mod blocking;
 
