@@ -68,7 +68,8 @@ pub fn validate_and_extract_data(raw_bytes: &[u8], data: &mut [u16]) -> Result<u
     let num_groups = raw_bytes.len() / GROUP_SIZE;
     let required_output_size = num_groups * DATA_PER_GROUP;
 
-    if data.len() < required_output_size {
+    if data.len() * 2 < required_output_size {
+        // u16 provides 2 bytes
         return Err(CrcError::BufferTooSmall);
     }
 
@@ -97,17 +98,17 @@ mod tests {
 
     #[test]
     fn test_validate_and_extract() {
-        // Test data with valid CRCs (replace with actual CRC values)
+        // Test data with valid CRCs
         let input = [
-            0x12, 0x34, 0xE2, // Data bytes + CRC
-            0x56, 0x78, 0x9A, // Data bytes + CRC
+            0x12, 0x34, 0x37, // Data bytes + CRC
+            0x56, 0x78, 0x7D, // Data bytes + CRC
         ];
 
         let mut output = [0u16; 2];
 
         match validate_and_extract_data(&input, &mut output) {
             Ok(n) => {
-                assert_eq!(n, 4);
+                assert_eq!(n, 2);
                 assert_eq!(&output, &[0x1234, 0x5678]);
             }
             Err(e) => panic!("Validation failed: {:?}", e),

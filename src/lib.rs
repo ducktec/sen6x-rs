@@ -42,14 +42,14 @@
 
 #![cfg_attr(not(test), no_std)]
 
-use crc::CrcError;
+use crc_internal::CrcError;
 
 #[cfg(feature = "async")]
 pub mod r#async;
 
 pub mod blocking;
 
-pub mod crc;
+pub mod crc_internal;
 
 /// I2C address for the sensor module.
 #[cfg(not(feature = "sen60"))]
@@ -104,7 +104,7 @@ enum ModuleState {
 }
 
 /// The maximum number of bytes that the driver has to read for any command
-const MAX_RX_BYTES: usize = 27;
+const MAX_RX_BYTES: usize = 48;
 
 /// The maximum number of bytes that the driver has to write for any command
 const MAX_TX_BYTES: usize = 18;
@@ -245,12 +245,12 @@ pub struct DeviceStatus {
 impl From<[u16; 2]> for DeviceStatus {
     fn from(data: [u16; 2]) -> Self {
         Self {
-            fan_speed_warning: (data[1] & (1 << 5)) != 0,
-            co2_error: (data[0] & (1 << 9)) != 0,
-            pm_error: (data[0] & (1 << 11)) != 0,
-            gas_error: (data[0] & (1 << 7)) != 0,
-            rh_t_error: (data[0] & (1 << 6)) != 0,
-            fan_error: (data[0] & (1 << 4)) != 0,
+            fan_speed_warning: (data[0] & (1 << 5)) != 0,
+            co2_error: (data[1] & (1 << 9)) != 0,
+            pm_error: (data[1] & (1 << 11)) != 0,
+            gas_error: (data[1] & (1 << 7)) != 0,
+            rh_t_error: (data[1] & (1 << 6)) != 0,
+            fan_error: (data[1] & (1 << 4)) != 0,
         }
     }
 }

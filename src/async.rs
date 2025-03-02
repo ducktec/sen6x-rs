@@ -50,10 +50,15 @@
 //!             // Read the measured values
 //!             let sample = sensor.get_sample().await.unwrap();
 //!             
-//!             // Process the values
-//!             println!("PM1.0: {} μg/m³", sample.pm1);
-//!             println!("PM2.5: {} μg/m³", sample.pm2_5);
-//!             // ... other values
+//!             // Print the values
+//!             println!("PM1.0: {} μg/m³", sample.pm1p0);
+//!             println!("PM2.5: {} μg/m³", sample.pm2p5);
+//!             println!("PM4.0: {} μg/m³", sample.pm4p0);
+//!             println!("PM10: {} μg/m³", sample.pm10p0);
+//!             println!("Temperature: {} °C", sample.temperature);
+//!             println!("Humidity: {} %RH", sample.humidity);
+//!             println!("VOC index: {}", sample.voc_index);
+//!             println!("NOx index: {}", sample.nox_index);
 //!             
 //!             // Exit the loop for this example
 //!             break;
