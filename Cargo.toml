@@ -1,0 +1,47 @@
+[package]
+name = "sen6x"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+authors = ["Robert Wiewel <dev@ducktec.de>"]
+description = "A rust no-std driver for the SEN6X sensor modules."
+keywords = [
+    "sen6x",
+    "sensor",
+    "i2c",
+    "embedded",
+    "no-std",
+    "sen66",
+    "sen60",
+    "sen63c",
+    "sen65",
+    "sen66",
+    "sen68",
+]
+categories = ["embedded", "no-std"]
+readme = "README.md"
+repository = "https://github.com/ducktec/sen6x-rs"
+documentation = "https://docs.rs/sen6x"
+
+[dependencies]
+embedded-hal = "1.0.0"
+embedded-hal-async = "1.0.0"
+log = "0.4.26"
+embedded-hal-mock = { version = "0.11.1", optional = true }
+
+[target.'cfg(all(target_arch = "arm"))'.dev-dependencies]
+linux-embedded-hal = "0.4.0"
+
+[features]
+default = ["sen66", "async"]
+async = []
+sen60 = []
+sen63c = []
+sen65 = []
+sen66 = []
+sen68 = []
+unittesting = ["dep:embedded-hal-mock"]
+
+[package.metadata.docs.rs]
+# Show async feature on docs.rs as well
+all-features = true
