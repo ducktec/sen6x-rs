@@ -73,10 +73,13 @@
 //! ```
 
 use crate::{
-    AlgorithmTuningParameters, CommandId, DeviceStatus, MAX_RX_BYTES, MAX_TX_BYTES, MODULE_ADDR,
-    MeasuredSample, ModuleState, RawConcentrationSample, RawMeasuredSample, Result, Sen6xError,
-    TempAccelPars, TempOffsetPars, crc_internal, get_execution_time,
+    CommandId, DeviceStatus, MAX_RX_BYTES, MAX_TX_BYTES, MODULE_ADDR, MeasuredSample, ModuleState,
+    RawConcentrationSample, RawMeasuredSample, Result, Sen6xError, TempAccelPars, TempOffsetPars,
+    crc_internal, get_execution_time,
 };
+
+#[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
+use crate::AlgorithmTuningParameters;
 
 /// Represents an I2C-connected SEN6X sensor module.
 #[derive(Copy, Clone, Debug)]
@@ -497,6 +500,7 @@ where
     /// Send command, write some data in one transaction, then wait for the execution time
     /// associated to the command and finally the data from the sensor module without
     /// any command sent again
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     fn send_write_wait_read(
         &mut self,
         command: CommandId,
@@ -617,7 +621,7 @@ mod tests {
     #[test]
     fn test_get_sample_sen63c() {
         let expectations = [
-            I2cTransaction::write(MODULE_ADDR, vec![0x03, 0x00]),
+            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x71]),
             I2cTransaction::read(
                 MODULE_ADDR,
                 combine_bytes_with_crc!(
@@ -653,7 +657,7 @@ mod tests {
     #[test]
     fn test_get_sample_sen65() {
         let expectations = [
-            I2cTransaction::write(MODULE_ADDR, vec![0x03, 0x00]),
+            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x46]),
             I2cTransaction::read(
                 MODULE_ADDR,
                 combine_bytes_with_crc!(
@@ -664,7 +668,7 @@ mod tests {
                     [0x13, 0x88], // Humidity = 50.00 %RH (5000)
                     [0x09, 0xC4], // Temperature = 25.00 °C (2500)
                     [0x00, 0x64], // VOC = 10.0
-                    [0x00, 0x01], // NOX = 0.1
+                    [0x00, 0x01]  // NOX = 0.1
                 ),
             ),
         ];
@@ -731,7 +735,7 @@ mod tests {
     #[test]
     fn test_get_sample_sen68() {
         let expectations = [
-            I2cTransaction::write(MODULE_ADDR, vec![0x03, 0x00]),
+            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x67]),
             I2cTransaction::read(
                 MODULE_ADDR,
                 combine_bytes_with_crc!(
@@ -769,12 +773,12 @@ mod tests {
     #[test]
     fn test_get_raw_sample_sen63c() {
         let expectations = [
-            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x05]),
+            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x92]),
             I2cTransaction::read(
                 MODULE_ADDR,
                 combine_bytes_with_crc!(
                     [0x30, 0x39], // Raw humidity = 12345
-                    [0xFF, 0x85], // Raw temperature = -123
+                    [0xFF, 0x85]  // Raw temperature = -123
                 ),
             ),
         ];
@@ -827,14 +831,14 @@ mod tests {
     #[test]
     fn test_get_raw_sample_sen65_sen68() {
         let expectations = [
-            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x05]),
+            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x55]),
             I2cTransaction::read(
                 MODULE_ADDR,
                 combine_bytes_with_crc!(
                     [0x30, 0x39], // Raw humidity = 12345
                     [0xFF, 0x85], // Raw temperature = -123
                     [0x02, 0x37], // Raw VOC = 567
-                    [0x00, 0x59], // Raw NOx = 89
+                    [0x00, 0x59]  // Raw NOx = 89
                 ),
             ),
         ];

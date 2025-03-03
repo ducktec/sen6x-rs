@@ -37,7 +37,7 @@ futures = { version = "0.3.31", optional = true }
 linux-embedded-hal = "0.4.0"
 
 [features]
-default = ["sen66", "unittesting", "async"]
+default = ["sen66"]
 async = []
 sen60 = []
 sen63c = []

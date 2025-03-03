@@ -84,7 +84,7 @@ pub enum CommandId {
     #[cfg(feature = "sen63c")]
     ReadMeasuredRawValues = 0x0492,
     #[cfg(any(feature = "sen65", feature = "sen68"))]
-    ReadMeasuredRawValues = 0x0405,
+    ReadMeasuredRawValues = 0x0455,
     #[cfg(feature = "sen66")]
     ReadMeasuredRawValues = 0x0405,
 
@@ -223,6 +223,7 @@ impl From<[u16; 7]> for MeasuredSample {
             pm10: data[3] as f32 / 10.0,
             humidity: data[4] as f32 / 100.0,
             temperature: data[5] as f32 / 100.0,
+            co2: data[6],
         }
     }
 }
@@ -231,10 +232,10 @@ impl From<[u16; 7]> for MeasuredSample {
 impl From<[u16; 8]> for MeasuredSample {
     fn from(data: [u16; 8]) -> Self {
         Self {
-            pm1: data[0] as f32,
-            pm2_5: data[1] as f32,
-            pm4: data[2] as f32,
-            pm10: data[3] as f32,
+            pm1: data[0] as f32 / 10.0,
+            pm2_5: data[1] as f32 / 10.0,
+            pm4: data[2] as f32 / 10.0,
+            pm10: data[3] as f32 / 10.0,
             humidity: data[4] as f32 / 100.0,
             temperature: data[5] as f32 / 100.0,
             voc: data[6] as f32 / 10.0,
@@ -367,7 +368,7 @@ impl From<[u16; 2]> for DeviceStatus {
         // in a variant can simply be ignored.
         Self {
             fan_speed_warning: (data[0] & (1 << 5)) != 0,
-            #[cfg(feature = "sen66")]
+            #[cfg(any(feature = "sen66", feature = "sen68", feature = "sen65"))]
             co2_error: (data[1] & (1 << 9)) != 0,
             #[cfg(feature = "sen63c")]
             co2_error: (data[1] & (1 << 12)) != 0,
