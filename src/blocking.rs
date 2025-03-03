@@ -142,7 +142,12 @@ where
     pub fn get_sample(&mut self) -> Result<MeasuredSample> {
         self.check_not_measuring()?;
 
+        #[cfg(any(feature = "sen66", feature = "sen68"))]
         let mut data = [0 as u16; 9];
+        #[cfg(feature = "sen65")]
+        let mut data = [0 as u16; 8];
+        #[cfg(feature = "sen63c")]
+        let mut data = [0 as u16; 7];
         self.send_wait_read(CommandId::ReadMeasuredValues, &mut data)?;
 
         Ok(MeasuredSample::from(data))
@@ -157,7 +162,12 @@ where
     pub fn get_raw_sample(&mut self) -> Result<RawMeasuredSample> {
         self.check_not_measuring()?;
 
+        #[cfg(any(feature = "sen65", feature = "sen68"))]
+        let mut data = [0 as u16; 4];
+        #[cfg(feature = "sen66")]
         let mut data = [0 as u16; 5];
+        #[cfg(feature = "sen63c")]
+        let mut data = [0 as u16; 2];
         self.send_wait_read(CommandId::ReadMeasuredRawValues, &mut data)?;
 
         Ok(RawMeasuredSample::from(data))
@@ -289,6 +299,7 @@ where
     }
 
     /// Get the VOC algorithm tuning parameters
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub fn get_voc_algo_tuning_parameters(&mut self) -> Result<AlgorithmTuningParameters> {
         self.check_not_measuring()?;
         let mut data = [0 as u16; 6];
@@ -298,6 +309,7 @@ where
     }
 
     /// Set the VOC algorithm tuning parameters
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub fn set_voc_algo_tuning_parameters(
         &mut self,
         tuning_pars: AlgorithmTuningParameters,
@@ -312,6 +324,7 @@ where
     /// Due to the long initialization phase of the algorithm and no sensor-internal
     /// persistent storing of it's state, the algorithm state ideally should be preserved
     /// between restarts.
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub fn get_voc_algo_state(&mut self) -> Result<[u16; 4]> {
         let mut data = [0 as u16; 4];
         self.send_wait_read(CommandId::VocAlgoState, &mut data)?;
@@ -324,12 +337,14 @@ where
     /// Due to the long initialization phase of the algorithm and no sensor-internal
     /// persistent storing of it's state, the algorithm state ideally should be preserved
     /// between restarts.
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub fn set_voc_algo_state(&mut self, state: [u16; 4]) -> Result<()> {
         self.check_not_measuring()?;
         self.send_write_wait(CommandId::VocAlgoState, &state)
     }
 
     /// Get the NOx algorithm tuning parameters
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub fn get_nox_algo_tuning_parameters(&mut self) -> Result<AlgorithmTuningParameters> {
         self.check_not_measuring()?;
         let mut data = [0 as u16; 6];
@@ -339,6 +354,7 @@ where
     }
 
     /// Set the NOx algorithm tuning parameters
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub fn set_nox_algo_tuning_parameters(
         &mut self,
         tuning_pars: AlgorithmTuningParameters,
@@ -349,6 +365,7 @@ where
     }
 
     /// Perform a forced CO2 recalibration
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     pub fn perform_forced_co2_recalibration(&mut self, target_concentration: u16) -> Result<u16> {
         self.check_not_measuring()?;
         let mut data = [0 as u16; 1];
@@ -362,6 +379,7 @@ where
     }
 
     /// Get the automatic self-calibration state of the CO2 sensor
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     pub fn get_is_co2_auto_self_calibrated(&mut self) -> Result<bool> {
         self.check_not_measuring()?;
         let mut data = [0 as u16; 1];
@@ -371,6 +389,7 @@ where
     }
 
     /// Enable or disable the automatic self-calibration of the CO2 sensor
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     pub fn set_co2_auto_self_calibration(&mut self, enabled: bool) -> Result<()> {
         self.check_not_measuring()?;
         let data: [u16; 1] = [if enabled { 0x01 } else { 0x00 }];
@@ -379,6 +398,7 @@ where
 
     /// Get the ambient pressure in hPa that is assumed by the sensor
     /// (used by the sensor for pressure compensation)
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     pub fn get_ambient_pressure(&mut self) -> Result<u16> {
         let mut data = [0 as u16; 1];
         self.send_wait_read(CommandId::AmbientPressure, &mut data)?;
@@ -388,12 +408,14 @@ where
 
     /// Set the ambient pressure in hPa that is assumed by the sensor
     /// (used by the sensor for pressure compensation)
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     pub fn set_ambient_pressure(&mut self, pressure: u16) -> Result<()> {
         self.send_write_wait(CommandId::AmbientPressure, &[pressure])
     }
 
     /// Get the altitude in meters that is assumed by the sensor
     /// (used by the sensor for pressure compensation)
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     pub fn get_altitude(&mut self) -> Result<u16> {
         self.check_not_measuring()?;
         let mut data = [0 as u16; 1];
@@ -404,6 +426,7 @@ where
 
     /// Set the sensor altitude in meters that is assumed by the sensor
     /// (used by the sensor for pressure compensation)
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     pub fn set_altitude(&mut self, altitude: u16) -> Result<()> {
         self.check_not_measuring()?;
         self.send_write_wait(CommandId::SensorAltitude, &[altitude])
@@ -590,22 +613,21 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(feature = "sen63c")]
     #[test]
-    fn test_get_sample() {
+    fn test_get_sample_sen63c() {
         let expectations = [
             I2cTransaction::write(MODULE_ADDR, vec![0x03, 0x00]),
             I2cTransaction::read(
                 MODULE_ADDR,
                 combine_bytes_with_crc!(
-                    [0x00, 0x0A], // PM1.0 = 10 μg/m³
-                    [0x00, 0x0F], // PM2.5 = 15 μg/m³
-                    [0x00, 0x14], // PM4.0 = 20 μg/m³
-                    [0x00, 0x19], // PM10 = 25 μg/m³
+                    [0x00, 0x0A], // PM1.0 = 1.0 μg/m³
+                    [0x00, 0x0F], // PM2.5 = 1.5 μg/m³
+                    [0x00, 0x14], // PM4.0 = 2.0 μg/m³
+                    [0x00, 0x19], // PM10 = 2.5 μg/m³
                     [0x13, 0x88], // Humidity = 50.00 %RH (5000)
                     [0x09, 0xC4], // Temperature = 25.00 °C (2500)
-                    [0x01, 0x90], // CO2 = 400 ppm
-                    [0x00, 0x64], // VOC = 100
-                    [0x00, 0x01]  // NOX = 1
+                    [0x01, 0x90]  // CO2 = 400 ppm
                 ),
             ),
         ];
@@ -616,21 +638,162 @@ mod tests {
 
         let sample = sensor.get_sample().unwrap();
 
-        assert_eq!(sample.pm1, 10.0);
-        assert_eq!(sample.pm2_5, 15.0);
-        assert_eq!(sample.pm4, 20.0);
-        assert_eq!(sample.pm10, 25.0);
+        assert_eq!(sample.pm1, 1.0);
+        assert_eq!(sample.pm2_5, 1.5);
+        assert_eq!(sample.pm4, 2.0);
+        assert_eq!(sample.pm10, 2.5);
         assert_eq!(sample.humidity, 50.0);
         assert_eq!(sample.temperature, 25.0);
-        assert_eq!(sample.co2, 400.0);
-        assert_eq!(sample.voc, 100.0);
-        assert_eq!(sample.nox, 1.0);
+        assert_eq!(sample.co2, 400);
 
         sensor.i2c.done();
     }
 
+    #[cfg(feature = "sen65")]
     #[test]
-    fn test_get_raw_sample() {
+    fn test_get_sample_sen65() {
+        let expectations = [
+            I2cTransaction::write(MODULE_ADDR, vec![0x03, 0x00]),
+            I2cTransaction::read(
+                MODULE_ADDR,
+                combine_bytes_with_crc!(
+                    [0x00, 0x0A], // PM1.0 = 1.0 μg/m³
+                    [0x00, 0x0F], // PM2.5 = 1.5 μg/m³
+                    [0x00, 0x14], // PM4.0 = 2.0 μg/m³
+                    [0x00, 0x19], // PM10 = 2.5 μg/m³
+                    [0x13, 0x88], // Humidity = 50.00 %RH (5000)
+                    [0x09, 0xC4], // Temperature = 25.00 °C (2500)
+                    [0x00, 0x64], // VOC = 10.0
+                    [0x00, 0x01], // NOX = 0.1
+                ),
+            ),
+        ];
+
+        let i2c = I2cMock::new(&expectations);
+        let delay = DelayMock::new();
+        let mut sensor = Sen6X::new(delay, i2c);
+
+        let sample = sensor.get_sample().unwrap();
+
+        assert_eq!(sample.pm1, 1.0);
+        assert_eq!(sample.pm2_5, 1.5);
+        assert_eq!(sample.pm4, 2.0);
+        assert_eq!(sample.pm10, 2.5);
+        assert_eq!(sample.humidity, 50.0);
+        assert_eq!(sample.temperature, 25.0);
+        assert_eq!(sample.voc, 10.0);
+        assert_eq!(sample.nox, 0.1);
+
+        sensor.i2c.done();
+    }
+
+    #[cfg(feature = "sen66")]
+    #[test]
+    fn test_get_sample_sen66() {
+        let expectations = [
+            I2cTransaction::write(MODULE_ADDR, vec![0x03, 0x00]),
+            I2cTransaction::read(
+                MODULE_ADDR,
+                combine_bytes_with_crc!(
+                    [0x00, 0x0A], // PM1.0 = 1.0 μg/m³
+                    [0x00, 0x0F], // PM2.5 = 1.5 μg/m³
+                    [0x00, 0x14], // PM4.0 = 2.0 μg/m³
+                    [0x00, 0x19], // PM10 = 2.5 μg/m³
+                    [0x13, 0x88], // Humidity = 50.00 %RH (5000)
+                    [0x09, 0xC4], // Temperature = 25.00 °C (2500)
+                    [0x00, 0x64], // VOC = 10.0
+                    [0x00, 0x01], // NOX = 0.1
+                    [0x01, 0x90]  // CO2 = 400 ppm
+                ),
+            ),
+        ];
+
+        let i2c = I2cMock::new(&expectations);
+        let delay = DelayMock::new();
+        let mut sensor = Sen6X::new(delay, i2c);
+
+        let sample = sensor.get_sample().unwrap();
+
+        assert_eq!(sample.pm1, 1.0);
+        assert_eq!(sample.pm2_5, 1.5);
+        assert_eq!(sample.pm4, 2.0);
+        assert_eq!(sample.pm10, 2.5);
+        assert_eq!(sample.humidity, 50.0);
+        assert_eq!(sample.temperature, 25.0);
+        assert_eq!(sample.co2, 400);
+        assert_eq!(sample.voc, 10.0);
+        assert_eq!(sample.nox, 0.1);
+
+        sensor.i2c.done();
+    }
+
+    #[cfg(feature = "sen68")]
+    #[test]
+    fn test_get_sample_sen68() {
+        let expectations = [
+            I2cTransaction::write(MODULE_ADDR, vec![0x03, 0x00]),
+            I2cTransaction::read(
+                MODULE_ADDR,
+                combine_bytes_with_crc!(
+                    [0x00, 0x0A], // PM1.0 = 1.0 μg/m³
+                    [0x00, 0x0F], // PM2.5 = 1.5 μg/m³
+                    [0x00, 0x14], // PM4.0 = 2.0 μg/m³
+                    [0x00, 0x19], // PM10 = 2.5 μg/m³
+                    [0x13, 0x88], // Humidity = 50.00 %RH (5000)
+                    [0x09, 0xC4], // Temperature = 25.00 °C (2500)
+                    [0x00, 0x64], // VOC = 10.0
+                    [0x00, 0x01], // NOX = 0.1
+                    [0x01, 0x90]  // HCHO = 40.0 ppb
+                ),
+            ),
+        ];
+
+        let i2c = I2cMock::new(&expectations);
+        let delay = DelayMock::new();
+        let mut sensor = Sen6X::new(delay, i2c);
+
+        let sample = sensor.get_sample().unwrap();
+
+        assert_eq!(sample.pm1, 1.0);
+        assert_eq!(sample.pm2_5, 1.5);
+        assert_eq!(sample.pm4, 2.0);
+        assert_eq!(sample.pm10, 2.5);
+        assert_eq!(sample.humidity, 50.0);
+        assert_eq!(sample.temperature, 25.0);
+        assert_eq!(sample.hcho, 40.0);
+
+        sensor.i2c.done();
+    }
+
+    #[cfg(feature = "sen63c")]
+    #[test]
+    fn test_get_raw_sample_sen63c() {
+        let expectations = [
+            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x05]),
+            I2cTransaction::read(
+                MODULE_ADDR,
+                combine_bytes_with_crc!(
+                    [0x30, 0x39], // Raw humidity = 12345
+                    [0xFF, 0x85], // Raw temperature = -123
+                ),
+            ),
+        ];
+
+        let i2c = I2cMock::new(&expectations);
+        let delay = DelayMock::new();
+        let mut sensor = Sen6X::new(delay, i2c);
+
+        let raw_sample = sensor.get_raw_sample().unwrap();
+
+        assert_eq!(raw_sample.raw_humidity, 12345);
+        assert_eq!(raw_sample.raw_temperature, -123);
+
+        sensor.i2c.done();
+    }
+
+    #[cfg(feature = "sen66")]
+    #[test]
+    fn test_get_raw_sample_sen66() {
         let expectations = [
             I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x05]),
             I2cTransaction::read(
@@ -656,6 +819,36 @@ mod tests {
         assert_eq!(raw_sample.raw_voc, 567);
         assert_eq!(raw_sample.raw_nox, 89);
         assert_eq!(raw_sample.raw_co2, 789);
+
+        sensor.i2c.done();
+    }
+
+    #[cfg(any(feature = "sen65", feature = "sen68"))]
+    #[test]
+    fn test_get_raw_sample_sen65_sen68() {
+        let expectations = [
+            I2cTransaction::write(MODULE_ADDR, vec![0x04, 0x05]),
+            I2cTransaction::read(
+                MODULE_ADDR,
+                combine_bytes_with_crc!(
+                    [0x30, 0x39], // Raw humidity = 12345
+                    [0xFF, 0x85], // Raw temperature = -123
+                    [0x02, 0x37], // Raw VOC = 567
+                    [0x00, 0x59], // Raw NOx = 89
+                ),
+            ),
+        ];
+
+        let i2c = I2cMock::new(&expectations);
+        let delay = DelayMock::new();
+        let mut sensor = Sen6X::new(delay, i2c);
+
+        let raw_sample = sensor.get_raw_sample().unwrap();
+
+        assert_eq!(raw_sample.raw_humidity, 12345);
+        assert_eq!(raw_sample.raw_temperature, -123);
+        assert_eq!(raw_sample.raw_voc, 567);
+        assert_eq!(raw_sample.raw_nox, 89);
 
         sensor.i2c.done();
     }
@@ -887,6 +1080,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     #[test]
     fn test_set_voc_algo_tuning_parameters() {
         let tuning_pars = AlgorithmTuningParameters {
@@ -921,6 +1115,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     #[test]
     fn test_get_voc_algo_tuning_parameters() {
         let expectations = [
@@ -954,6 +1149,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     #[test]
     fn test_set_and_get_ambient_pressure() {
         // Test setting ambient pressure
@@ -1096,6 +1292,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     #[test]
     fn test_set_altitude() {
         let expectations = [I2cTransaction::write(
@@ -1116,6 +1313,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     #[test]
     fn test_get_altitude() {
         let expectations = [
@@ -1133,6 +1331,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     #[test]
     fn test_get_voc_algo_state() {
         let expectations = [
@@ -1158,6 +1357,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     #[test]
     fn test_set_voc_algo_state() {
         let state = [0x1234, 0x5678, 0x9ABC, 0xDEF0];
@@ -1182,6 +1382,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     #[test]
     fn test_get_nox_algo_tuning_parameters() {
         let expectations = [
@@ -1215,6 +1416,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     #[test]
     fn test_set_nox_algo_tuning_parameters() {
         let tuning_pars = AlgorithmTuningParameters {
@@ -1249,6 +1451,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     #[test]
     fn test_perform_forced_co2_recalibration() {
         let target_concentration = 400;
@@ -1277,6 +1480,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     #[test]
     fn test_get_is_co2_auto_self_calibrated() {
         let expectations = [
@@ -1294,6 +1498,7 @@ mod tests {
         sensor.i2c.done();
     }
 
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     #[test]
     fn test_set_co2_auto_self_calibration() {
         // Test enabling
@@ -1362,6 +1567,7 @@ mod tests {
             sensor.activate_sht_heater(),
             Err(Sen6xError::InvalidState)
         ));
+        #[cfg(any(feature = "sen63c", feature = "sen66"))]
         assert!(matches!(
             sensor.set_altitude(500),
             Err(Sen6xError::InvalidState)

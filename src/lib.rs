@@ -26,6 +26,15 @@
 //!     * activate SHT heater
 //!     * perform forced co2 recalibration
 //!
+//! ## Supported sensor variants
+//! * SEN63C
+//! * SEN65
+//! * SEN66
+//! * SEN68
+//!
+//! ## Currently unsupported sensor variants
+//! * SEN60 (substantially different data formats)
+//!
 //! ## Usage
 //!
 //! By default, the driver is in blocking mode. To use the driver in async mode, enable the `async` feature.
@@ -52,20 +61,33 @@ pub mod blocking;
 pub mod crc_internal;
 
 /// I2C address for the sensor module.
-#[cfg(not(feature = "sen60"))]
 pub const MODULE_ADDR: u8 = 0x6B;
-#[cfg(feature = "sen60")]
-pub const MODULE_ADDR: u8 = 0x6C;
 
 /// Command ID enum.
+#[cfg(not(feature = "sen60"))]
 #[repr(u16)]
 #[derive(Copy, Clone, Debug)]
 pub enum CommandId {
     StartContinuousMeasurement = 0x0021,
     StopMeasurement = 0x0104,
     GetDataReady = 0x0202,
+
+    #[cfg(feature = "sen63c")]
+    ReadMeasuredValues = 0x0471,
+    #[cfg(feature = "sen65")]
+    ReadMeasuredValues = 0x0446,
+    #[cfg(feature = "sen66")]
     ReadMeasuredValues = 0x0300,
+    #[cfg(feature = "sen68")]
+    ReadMeasuredValues = 0x0467,
+
+    #[cfg(feature = "sen63c")]
+    ReadMeasuredRawValues = 0x0492,
+    #[cfg(any(feature = "sen65", feature = "sen68"))]
     ReadMeasuredRawValues = 0x0405,
+    #[cfg(feature = "sen66")]
+    ReadMeasuredRawValues = 0x0405,
+
     ReadNumberConcentrationValues = 0x0316,
     SetTempOffsetPars = 0x60B2,
     SetTempAccelPars = 0x6100,
@@ -76,12 +98,21 @@ pub enum CommandId {
     DeviceReset = 0xD304,
     StartFanCleaning = 0x5607,
     ActivateShtHeater = 0x6765,
+
+    #[cfg(any(feature = "sen65", feature = "sen68", feature = "sen66"))]
     VocAlgoTuningPars = 0x60D0,
+    #[cfg(any(feature = "sen65", feature = "sen68", feature = "sen66"))]
     VocAlgoState = 0x6181,
+    #[cfg(any(feature = "sen65", feature = "sen68", feature = "sen66"))]
     NoxAlgoTuningPars = 0x60E1,
+
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     PerformForcedCo2Recalibration = 0x6707,
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     Co2SensorAutoCalibrationState = 0x6711,
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     AmbientPressure = 0x6720,
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
     SensorAltitude = 0x6736,
 }
 
@@ -91,6 +122,7 @@ pub fn get_execution_time(command: CommandId) -> u32 {
         CommandId::StartContinuousMeasurement => 50,
         CommandId::StopMeasurement => 1000,
         CommandId::ActivateShtHeater => 1300,
+        #[cfg(any(feature = "sen63c", feature = "sen66"))]
         CommandId::PerformForcedCo2Recalibration => 500,
         _ => 20,
     }
@@ -151,15 +183,53 @@ pub struct MeasuredSample {
     /// Temperature in degrees Celsius
     pub temperature: f32,
     /// CO2 concentration in ppm
-    pub co2: f32,
+    #[cfg(any(feature = "sen63c", feature = "sen66"))]
+    pub co2: u16,
     /// VOC concentration in ppb
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub voc: f32,
     /// NOX concentration in ppb
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub nox: f32,
+    /// Formaldehyde (HCHO) concentration in ppb
+    #[cfg(feature = "sen68")]
+    pub hcho: f32,
 }
 
+#[cfg(feature = "sen66")]
 impl From<[u16; 9]> for MeasuredSample {
     fn from(data: [u16; 9]) -> Self {
+        Self {
+            pm1: data[0] as f32 / 10.0,
+            pm2_5: data[1] as f32 / 10.0,
+            pm4: data[2] as f32 / 10.0,
+            pm10: data[3] as f32 / 10.0,
+            humidity: data[4] as f32 / 100.0,
+            temperature: data[5] as f32 / 100.0,
+            voc: data[6] as f32 / 10.0,
+            nox: data[7] as f32 / 10.0,
+            co2: data[8],
+        }
+    }
+}
+
+#[cfg(feature = "sen63c")]
+impl From<[u16; 7]> for MeasuredSample {
+    fn from(data: [u16; 7]) -> Self {
+        Self {
+            pm1: data[0] as f32 / 10.0,
+            pm2_5: data[1] as f32 / 10.0,
+            pm4: data[2] as f32 / 10.0,
+            pm10: data[3] as f32 / 10.0,
+            humidity: data[4] as f32 / 100.0,
+            temperature: data[5] as f32 / 100.0,
+        }
+    }
+}
+
+#[cfg(feature = "sen65")]
+impl From<[u16; 8]> for MeasuredSample {
+    fn from(data: [u16; 8]) -> Self {
         Self {
             pm1: data[0] as f32,
             pm2_5: data[1] as f32,
@@ -167,9 +237,25 @@ impl From<[u16; 9]> for MeasuredSample {
             pm10: data[3] as f32,
             humidity: data[4] as f32 / 100.0,
             temperature: data[5] as f32 / 100.0,
-            co2: data[6] as f32,
-            voc: data[7] as f32,
-            nox: data[8] as f32,
+            voc: data[6] as f32 / 10.0,
+            nox: data[7] as f32 / 10.0,
+        }
+    }
+}
+
+#[cfg(feature = "sen68")]
+impl From<[u16; 9]> for MeasuredSample {
+    fn from(data: [u16; 9]) -> Self {
+        Self {
+            pm1: data[0] as f32 / 10.0,
+            pm2_5: data[1] as f32 / 10.0,
+            pm4: data[2] as f32 / 10.0,
+            pm10: data[3] as f32 / 10.0,
+            humidity: data[4] as f32 / 100.0,
+            temperature: data[5] as f32 / 100.0,
+            voc: data[6] as f32 / 10.0,
+            nox: data[7] as f32 / 10.0,
+            hcho: data[8] as f32 / 10.0,
         }
     }
 }
@@ -182,13 +268,43 @@ pub struct RawMeasuredSample {
     /// Raw Temperature
     pub raw_temperature: i16,
     /// Raw VOC ticks
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub raw_voc: u16,
     /// Raw NOx ticks
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub raw_nox: u16,
     /// Raw (non-interpolated) CO2 value
+    #[cfg(feature = "sen66")]
     pub raw_co2: u16,
 }
 
+#[cfg(feature = "sen63c")]
+impl From<[u16; 2]> for RawMeasuredSample {
+    fn from(data: [u16; 2]) -> Self {
+        Self {
+            raw_humidity: data[0] as i16,
+            raw_temperature: data[1] as i16,
+        }
+        // It is surprising here that, according to the datasheet v0.9,
+        // the SEN63C does not provide raw CO2 values.
+    }
+}
+
+#[cfg(any(feature = "sen65", feature = "sen68"))]
+impl From<[u16; 4]> for RawMeasuredSample {
+    fn from(data: [u16; 4]) -> Self {
+        Self {
+            raw_humidity: data[0] as i16,
+            raw_temperature: data[1] as i16,
+            raw_voc: data[2],
+            raw_nox: data[3],
+        }
+        // It is surprising here that, according to the datasheet v0.9,
+        // the SEN68 does not provide raw HCHO values.
+    }
+}
+
+#[cfg(any(feature = "sen66"))]
 impl From<[u16; 5]> for RawMeasuredSample {
     fn from(data: [u16; 5]) -> Self {
         Self {
@@ -240,17 +356,26 @@ pub struct DeviceStatus {
     pub rh_t_error: bool,
     /// Fan error
     pub fan_error: bool,
+    /// HCHO error
+    pub hcho_error: bool,
 }
 
 impl From<[u16; 2]> for DeviceStatus {
     fn from(data: [u16; 2]) -> Self {
+        // For now, we're not feature-gating the error flags
+        // per variant beyond the co2-switch. Non-existing flags
+        // in a variant can simply be ignored.
         Self {
             fan_speed_warning: (data[0] & (1 << 5)) != 0,
+            #[cfg(feature = "sen66")]
             co2_error: (data[1] & (1 << 9)) != 0,
+            #[cfg(feature = "sen63c")]
+            co2_error: (data[1] & (1 << 12)) != 0,
             pm_error: (data[1] & (1 << 11)) != 0,
             gas_error: (data[1] & (1 << 7)) != 0,
             rh_t_error: (data[1] & (1 << 6)) != 0,
             fan_error: (data[1] & (1 << 4)) != 0,
+            hcho_error: (data[1] & (1 << 10)) != 0,
         }
     }
 }
