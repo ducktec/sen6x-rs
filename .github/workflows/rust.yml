@@ -1,0 +1,26 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Rust target
+      run: rustup target add thumbv8m.main-none-eabihf
+    - name: Build (blocking - default)
+      run: cargo build --verbose
+    - name: Build (async)
+      run: cargo build --features async --verbose
+    - name: Run unit tests
+      run: cargo xtask test-features
+    - name: Build samples
+      run: cargo build --package examples-rp2350 --bins --target thumbv8m.main-none-eabihf

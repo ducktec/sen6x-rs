@@ -1,11 +1,13 @@
-A Rust no-std driver for the Sen6x environment sensor modules.
+# SEN6x Rust Driver
+
+A Rust `no-std` driver for the SEN6x environmental sensor nodes for air quality applications.
 
 [![Crates.io](https://img.shields.io/crates/v/sen6x.svg)](https://crates.io/crates/sen6x)
 [![Docs.rs](https://docs.rs/sen6x/badge.svg)](https://docs.rs/sen6x)
 
 ## Description
 
-This library provides a Rust interface for the Sen6x family of environment sensor modules (SEN-63C, SEN-65, SEN-66, SEN68). It is designed to be used in no-std environments, making it suitable for use in embedded systems.
+This library provides a Rust interface for the SEN6x family of environment sensor nodes (SEN-63C, SEN-65, SEN-66, SEN68). It is designed to be used in no-std environments, making it suitable for use in embedded systems.
 
 ## Supported features
 
@@ -84,6 +86,9 @@ This library was tested so far (using the example) on a Raspberry Pi Pico 2W and
 
 ## Examples
 There are basic example reading for sensor values available in the `examples-rp2350` directory. Follow the instructions in the README.md file there to run the example on a Raspberry Pi Pico 2/2W.
+
+## Links
+Module Datasheet: [SEN6x Datasheet](https://sensirion.com/resource/datasheet/SEN6x) (developed on version `0.9`)
 
 ## License
 This library is licensed under either of
