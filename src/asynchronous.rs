@@ -5,74 +5,6 @@
 //! with asynchronous code.
 //!
 //! The methods usually return `Result` with the error type being `Sen6xError`.
-//!
-//! ## Examples
-//!
-//! ### Create a driver instance
-//!
-//! ```rust
-//! use sen6x::r#async::Sen6X;
-//! use embedded_hal_async::i2c::I2c;
-//! use embedded_hal_async::delay::DelayNs;
-//!
-//! async fn example() {
-//!     // These would be your actual implementations
-//!     let i2c = MyI2C::new();
-//!     let delay = MyDelay::new();
-//!     
-//!     // Create the Sen6X driver instance
-//!     let mut sensor = Sen6X::new(delay, i2c);
-//! }
-//! ```
-//!
-//! ### Read sample
-//!
-//! ```rust
-//! use sen6x::r#async::Sen6X;
-//! use embedded_hal_async::i2c::I2c;
-//! use embedded_hal_async::delay::DelayNs;
-//!
-//! async fn example() {
-//!     // Initialize peripherals
-//!     let i2c = MyI2C::new();
-//!     let delay = MyDelay::new();
-//!     
-//!     // Create the Sen6X driver instance
-//!     let mut sensor = Sen6X::new(delay, i2c);
-//!     
-//!     // Start continuous measurement (1 measurement per second)
-//!     sensor.start_continuous_measurement().await.unwrap();
-//!     
-//!     // Example loop
-//!     loop {
-//!         // Check if new data is ready
-//!         if sensor.get_is_data_ready().await.unwrap() {
-//!             // Read the measured values
-//!             let sample = sensor.get_sample().await.unwrap();
-//!             
-//!             // Print the values
-//!             println!("PM1.0: {} μg/m³", sample.pm1p0);
-//!             println!("PM2.5: {} μg/m³", sample.pm2p5);
-//!             println!("PM4.0: {} μg/m³", sample.pm4p0);
-//!             println!("PM10: {} μg/m³", sample.pm10p0);
-//!             println!("Temperature: {} °C", sample.temperature);
-//!             println!("Humidity: {} %RH", sample.humidity);
-//!             println!("VOC index: {}", sample.voc_index);
-//!             println!("NOx index: {}", sample.nox_index);
-//!             
-//!             // Exit the loop for this example
-//!             break;
-//!         }
-//!         
-//!         // Wait a bit before checking again
-//!         // In a real application, you might use a more sophisticated approach
-//!         sensor.delay.delay_ms(100).await;
-//!     }
-//!     
-//!     // Stop measurement when done
-//!     sensor.stop_measurement().await.unwrap();
-//! }
-//! ```
 
 use crate::{
     CommandId, DeviceStatus, MAX_RX_BYTES, MAX_TX_BYTES, MODULE_ADDR, MeasuredSample, ModuleState,
@@ -84,7 +16,7 @@ use crate::{
 use crate::AlgorithmTuningParameters;
 
 /// Represents an I2C-connected SEN6X sensor module with async operations.
-pub struct Sen6X<I2C, D> {
+pub struct Sen6x<I2C, D> {
     /// Delay provider for async delay operations.
     pub delay: D,
 
@@ -95,7 +27,7 @@ pub struct Sen6X<I2C, D> {
     state: ModuleState,
 }
 
-impl<I2C, D> Sen6X<I2C, D>
+impl<I2C, D> Sen6x<I2C, D>
 where
     D: embedded_hal_async::delay::DelayNs,
     I2C: embedded_hal_async::i2c::I2c,
@@ -145,8 +77,6 @@ where
 
     /// Read the last measured values from the sensor module
     pub async fn get_sample(&mut self) -> Result<MeasuredSample> {
-        self.check_not_measuring()?;
-
         #[cfg(any(feature = "sen66", feature = "sen68"))]
         let mut data = [0 as u16; 9];
         #[cfg(feature = "sen65")]
@@ -166,8 +96,6 @@ where
     ///
     /// This is for advanced use only, normally you would use `get_sample`.
     pub async fn get_raw_sample(&mut self) -> Result<RawMeasuredSample> {
-        self.check_not_measuring()?;
-
         #[cfg(any(feature = "sen65", feature = "sen68"))]
         let mut data = [0 as u16; 4];
         #[cfg(feature = "sen66")]
@@ -187,8 +115,6 @@ where
     ///
     /// This is for advanced use only, normally you would use `get_sample`.
     pub async fn get_raw_concentration_sample(&mut self) -> Result<RawConcentrationSample> {
-        self.check_not_measuring()?;
-
         let mut data = [0 as u16; 4];
         self.send_wait_read(CommandId::ReadNumberConcentrationValues, &mut data)
             .await?;
@@ -578,7 +504,7 @@ mod tests {
     fn test_new_async() {
         let i2c = I2cMock::new(&[]);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         // Verify the initial state
         assert_eq!(sensor.state, ModuleState::Idle);
@@ -592,7 +518,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.start_continuous_measurement()).is_ok());
         assert_eq!(sensor.state, ModuleState::Measuring);
@@ -606,7 +532,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
         sensor.state = ModuleState::Measuring;
 
         assert!(block_on(sensor.stop_measurement()).is_ok());
@@ -624,7 +550,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let result = block_on(sensor.get_is_data_ready()).unwrap();
         assert_eq!(result, true);
@@ -641,7 +567,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let result = block_on(sensor.get_is_data_ready()).unwrap();
         assert_eq!(result, false);
@@ -661,7 +587,7 @@ mod tests {
                     [0x00, 0x14], // PM4.0 = 2.0 μg/m³
                     [0x00, 0x19], // PM10 = 2.5 μg/m³
                     [0x13, 0x88], // Humidity = 50.00 %RH (5000)
-                    [0x09, 0xC4], // Temperature = 25.00 °C (2500)
+                    [0x09, 0xC4], // Temperature = 12.5 °C
                     [0x01, 0x90]  // CO2 = 400 ppm
                 ),
             ),
@@ -669,7 +595,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let sample = block_on(sensor.get_sample()).unwrap();
 
@@ -678,7 +604,7 @@ mod tests {
         assert_eq!(sample.pm4, 2.0);
         assert_eq!(sample.pm10, 2.5);
         assert_eq!(sample.humidity, 50.0);
-        assert_eq!(sample.temperature, 25.0);
+        assert_eq!(sample.temperature, 12.5);
         assert_eq!(sample.co2, 400);
 
         sensor.i2c.done();
@@ -697,7 +623,7 @@ mod tests {
                     [0x00, 0x14], // PM4.0 = 2.0 μg/m³
                     [0x00, 0x19], // PM10 = 2.5 μg/m³
                     [0x13, 0x88], // Humidity = 50.00 %RH (5000)
-                    [0x09, 0xC4], // Temperature = 25.00 °C (2500)
+                    [0x09, 0xC4], // Temperature = 12.5 °C
                     [0x00, 0x64], // VOC = 10.0
                     [0x00, 0x01]  // NOX = 0.1
                 ),
@@ -706,7 +632,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let sample = block_on(sensor.get_sample()).unwrap();
 
@@ -715,7 +641,7 @@ mod tests {
         assert_eq!(sample.pm4, 2.0);
         assert_eq!(sample.pm10, 2.5);
         assert_eq!(sample.humidity, 50.0);
-        assert_eq!(sample.temperature, 25.0);
+        assert_eq!(sample.temperature, 12.5);
         assert_eq!(sample.voc, 10.0);
         assert_eq!(sample.nox, 0.1);
 
@@ -735,7 +661,7 @@ mod tests {
                     [0x00, 0x14], // PM4.0 = 2.0 μg/m³
                     [0x00, 0x19], // PM10 = 2.5 μg/m³
                     [0x13, 0x88], // Humidity = 50.00 %RH (5000)
-                    [0x09, 0xC4], // Temperature = 25.00 °C (2500)
+                    [0x09, 0xC4], // Temperature = 12.5 °C
                     [0x00, 0x64], // VOC = 10.0
                     [0x00, 0x01], // NOX = 0.1
                     [0x01, 0x90]  // CO2 = 400 ppm
@@ -745,7 +671,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let sample = block_on(sensor.get_sample()).unwrap();
 
@@ -754,7 +680,7 @@ mod tests {
         assert_eq!(sample.pm4, 2.0);
         assert_eq!(sample.pm10, 2.5);
         assert_eq!(sample.humidity, 50.0);
-        assert_eq!(sample.temperature, 25.0);
+        assert_eq!(sample.temperature, 12.5);
         assert_eq!(sample.co2, 400);
         assert_eq!(sample.voc, 10.0);
         assert_eq!(sample.nox, 0.1);
@@ -775,7 +701,7 @@ mod tests {
                     [0x00, 0x14], // PM4.0 = 2.0 μg/m³
                     [0x00, 0x19], // PM10 = 2.5 μg/m³
                     [0x13, 0x88], // Humidity = 50.00 %RH (5000)
-                    [0x09, 0xC4], // Temperature = 25.00 °C (2500)
+                    [0x09, 0xC4], // Temperature = 12.5 °C
                     [0x00, 0x64], // VOC = 10.0
                     [0x00, 0x01], // NOX = 0.1
                     [0x01, 0x90]  // HCHO = 40.0 ppb
@@ -785,7 +711,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let sample = block_on(sensor.get_sample()).unwrap();
 
@@ -794,7 +720,7 @@ mod tests {
         assert_eq!(sample.pm4, 2.0);
         assert_eq!(sample.pm10, 2.5);
         assert_eq!(sample.humidity, 50.0);
-        assert_eq!(sample.temperature, 25.0);
+        assert_eq!(sample.temperature, 12.5);
         assert_eq!(sample.hcho, 40.0);
 
         sensor.i2c.done();
@@ -816,7 +742,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let raw_sample = block_on(sensor.get_raw_sample()).unwrap();
 
@@ -845,7 +771,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let raw_sample = block_on(sensor.get_raw_sample()).unwrap();
 
@@ -876,7 +802,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let raw_sample = block_on(sensor.get_raw_sample()).unwrap();
 
@@ -905,7 +831,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let raw_conc = block_on(sensor.get_raw_concentration_sample()).unwrap();
 
@@ -940,7 +866,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_temp_offset_pars(temp_offset_pars)).is_ok());
 
@@ -970,7 +896,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_temp_accel_pars(temp_accel_pars)).is_ok());
 
@@ -1008,7 +934,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let mut buffer = [0u8; 32];
         let product_name = block_on(sensor.get_product_name(&mut buffer)).unwrap();
@@ -1049,7 +975,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let mut buffer = [0u8; 32];
         let serial_number = block_on(sensor.get_serial_number(&mut buffer)).unwrap();
@@ -1075,7 +1001,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let status = block_on(sensor.read_device_status()).unwrap();
 
@@ -1095,7 +1021,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.reset()).is_ok());
 
@@ -1108,7 +1034,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.start_fan_cleaning()).is_ok());
 
@@ -1143,7 +1069,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_voc_algo_tuning_parameters(tuning_pars)).is_ok());
 
@@ -1170,7 +1096,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let tuning_pars = block_on(sensor.get_voc_algo_tuning_parameters()).unwrap();
 
@@ -1200,7 +1126,7 @@ mod tests {
 
         let i2c = I2cMock::new(&set_expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_ambient_pressure(pressure)).is_ok());
         sensor.i2c.done();
@@ -1213,7 +1139,7 @@ mod tests {
 
         let i2c = I2cMock::new(&get_expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let read_pressure = block_on(sensor.get_ambient_pressure()).unwrap();
         assert_eq!(read_pressure, 1013);
@@ -1229,7 +1155,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let result = block_on(sensor.start_continuous_measurement());
         assert!(result.is_err());
@@ -1246,7 +1172,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let result = block_on(sensor.get_is_data_ready());
         assert!(result.is_err());
@@ -1259,7 +1185,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
         sensor.state = ModuleState::Measuring;
 
         let result = block_on(sensor.reset());
@@ -1276,7 +1202,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let result = block_on(sensor.get_is_data_ready());
         assert!(result.is_err());
@@ -1290,7 +1216,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.activate_sht_heater()).is_ok());
 
@@ -1313,7 +1239,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let status = block_on(sensor.read_and_clear_device_status()).unwrap();
 
@@ -1341,7 +1267,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_altitude(500)).is_ok());
 
@@ -1358,7 +1284,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let altitude = block_on(sensor.get_altitude()).unwrap();
         assert_eq!(altitude, 500);
@@ -1384,7 +1310,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let state = block_on(sensor.get_voc_algo_state()).unwrap();
         assert_eq!(state, [0x1234, 0x5678, 0x9ABC, 0xDEF0]);
@@ -1410,7 +1336,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_voc_algo_state(state)).is_ok());
 
@@ -1437,7 +1363,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let tuning_pars = block_on(sensor.get_nox_algo_tuning_parameters()).unwrap();
 
@@ -1479,7 +1405,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_nox_algo_tuning_parameters(tuning_pars)).is_ok());
 
@@ -1505,7 +1431,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let correction =
             block_on(sensor.perform_forced_co2_recalibration(target_concentration)).unwrap();
@@ -1524,7 +1450,7 @@ mod tests {
 
         let i2c = I2cMock::new(&expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         let is_enabled = block_on(sensor.get_is_co2_auto_self_calibrated()).unwrap();
         assert_eq!(is_enabled, true);
@@ -1547,7 +1473,7 @@ mod tests {
 
         let i2c = I2cMock::new(&enable_expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_co2_auto_self_calibration(true)).is_ok());
         sensor.i2c.done();
@@ -1564,7 +1490,7 @@ mod tests {
 
         let i2c = I2cMock::new(&disable_expectations);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
 
         assert!(block_on(sensor.set_co2_auto_self_calibration(false)).is_ok());
         sensor.i2c.done();
@@ -1575,24 +1501,12 @@ mod tests {
         // Test functions that should fail when in measuring state
         let i2c = I2cMock::new(&[]);
         let delay = DelayMock::new();
-        let mut sensor = Sen6X::new(delay, i2c);
+        let mut sensor = Sen6x::new(delay, i2c);
         sensor.state = ModuleState::Measuring;
 
         // Try operations that should fail in measuring state
         assert!(matches!(
             block_on(sensor.start_continuous_measurement()),
-            Err(Sen6xError::InvalidState)
-        ));
-        assert!(matches!(
-            block_on(sensor.get_sample()),
-            Err(Sen6xError::InvalidState)
-        ));
-        assert!(matches!(
-            block_on(sensor.get_raw_sample()),
-            Err(Sen6xError::InvalidState)
-        ));
-        assert!(matches!(
-            block_on(sensor.get_raw_concentration_sample()),
             Err(Sen6xError::InvalidState)
         ));
         assert!(matches!(

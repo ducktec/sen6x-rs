@@ -22,6 +22,7 @@ const CRC8_INIT: u8 = 0xFF;
 
 /// Error type for CRC validation
 #[derive(Debug, Eq, PartialEq, Copy, Clone, PartialOrd, Ord)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum CrcError {
     /// CRC validation failed
     InvalidCrc,

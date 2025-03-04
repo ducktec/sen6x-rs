@@ -44,7 +44,7 @@
 //! ## Unit tests
 //! The unit tests are only working with a specific feature flag enabled. To run the tests, use the following command:
 //! ```sh
-//! cargo test --features unittesting
+//! cargo test
 //! ```
 //! The reason for the feature flag is that the mock hal implementation is not `no_std` and thus cannot be part of a build for
 //! a `no_std` target.
@@ -146,6 +146,7 @@ type Result<T> = core::result::Result<T, Sen6xError>;
 
 /// Represents any error that may happen during communication.
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Sen6xError {
     /// An error occurred while reading from the module.
     ReadI2CError,
@@ -169,6 +170,7 @@ impl From<CrcError> for Sen6xError {
 
 /// Represents a measured sample from the sensor module.
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct MeasuredSample {
     /// PM1 concentration in µg/m³
     pub pm1: f32,
@@ -205,7 +207,7 @@ impl From<[u16; 9]> for MeasuredSample {
             pm4: data[2] as f32 / 10.0,
             pm10: data[3] as f32 / 10.0,
             humidity: data[4] as f32 / 100.0,
-            temperature: data[5] as f32 / 100.0,
+            temperature: data[5] as f32 / 200.0,
             voc: data[6] as f32 / 10.0,
             nox: data[7] as f32 / 10.0,
             co2: data[8],
@@ -222,7 +224,7 @@ impl From<[u16; 7]> for MeasuredSample {
             pm4: data[2] as f32 / 10.0,
             pm10: data[3] as f32 / 10.0,
             humidity: data[4] as f32 / 100.0,
-            temperature: data[5] as f32 / 100.0,
+            temperature: data[5] as f32 / 200.0,
             co2: data[6],
         }
     }
@@ -237,7 +239,7 @@ impl From<[u16; 8]> for MeasuredSample {
             pm4: data[2] as f32 / 10.0,
             pm10: data[3] as f32 / 10.0,
             humidity: data[4] as f32 / 100.0,
-            temperature: data[5] as f32 / 100.0,
+            temperature: data[5] as f32 / 200.0,
             voc: data[6] as f32 / 10.0,
             nox: data[7] as f32 / 10.0,
         }
@@ -253,7 +255,7 @@ impl From<[u16; 9]> for MeasuredSample {
             pm4: data[2] as f32 / 10.0,
             pm10: data[3] as f32 / 10.0,
             humidity: data[4] as f32 / 100.0,
-            temperature: data[5] as f32 / 100.0,
+            temperature: data[5] as f32 / 200.0,
             voc: data[6] as f32 / 10.0,
             nox: data[7] as f32 / 10.0,
             hcho: data[8] as f32 / 10.0,
@@ -263,6 +265,7 @@ impl From<[u16; 9]> for MeasuredSample {
 
 /// Represents a raw measured sample from the sensor module.
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct RawMeasuredSample {
     /// Raw Humidity
     pub raw_humidity: i16,
@@ -322,6 +325,7 @@ impl From<[u16; 5]> for RawMeasuredSample {
 /// (these are the same values as in the MeasuredSample struct,
 /// just not scaled to the correct values)
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct RawConcentrationSample {
     /// PM1 concentration
     pub pm1: u16,
@@ -344,6 +348,8 @@ impl From<[u16; 4]> for RawConcentrationSample {
     }
 }
 
+#[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct DeviceStatus {
     /// Fan speed is too high or too low
     pub fan_speed_warning: bool,
@@ -383,6 +389,7 @@ impl From<[u16; 2]> for DeviceStatus {
 
 /// (Volatile) internal temperature offset parameters
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TempOffsetPars {
     /// Offset (raw value, not scaled)
     pub offset: i16,
@@ -407,6 +414,7 @@ impl From<TempOffsetPars> for [u16; 4] {
 
 /// (Volatile) internal temperature acceleration parameters
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TempAccelPars {
     /// Filter constant K (already scaled)
     pub k: u16,
@@ -426,6 +434,7 @@ impl From<TempAccelPars> for [u16; 4] {
 
 /// VOC/NOx algorithm tuning parameters
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct AlgorithmTuningParameters {
     /// Index offset (range 1..250, default 100)
     pub index_offset: i16,

@@ -24,7 +24,7 @@ fn main() -> Result<()> {
 
 fn test_features() -> Result<()> {
     // Base features to always include
-    let base_features = ["unittesting"];
+    let base_features = [];
 
     // Define sensor variants
     let sensor_variants = ["sen63c", "sen65", "sen66", "sen68"]; // "sen60" not supported yet
