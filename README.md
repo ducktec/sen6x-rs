@@ -85,7 +85,7 @@ cargo xtask test-features
 This library was tested so far (using the example) on a Raspberry Pi Pico 2W and an engineering sample of the SEN-66 module directly connected to the Pico.
 
 ## Examples
-There are basic example reading for sensor values available in the `examples-rp2350` directory. Follow the instructions in the README.md file there to run the example on a Raspberry Pi Pico 2/2W.
+Basic example reading for sensor values are available in the [`examples-rp2350`](https://github.com/ducktec/sen6x-rs/tree/main/examples-rp2350) directory of the source code repository. Follow the instructions in the README.md in that directory to run the examples on a Raspberry Pi Pico 2/2W.
 
 ## Links
 Module Datasheet: [SEN6x Datasheet](https://sensirion.com/resource/datasheet/SEN6x) (developed on version `0.9`)
@@ -101,4 +101,4 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 
 # Changelog
 
-TBD
+v0.1.0 - Initial release
