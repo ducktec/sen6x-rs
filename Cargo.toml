@@ -3,24 +3,12 @@ members = ["examples-rp2350", "xtask"]
 
 [package]
 name = "sen6x"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 authors = ["Robert Wiewel <dev@ducktec.de>"]
 description = "A rust no-std driver for the SEN6X sensor modules."
-keywords = [
-    "sen6x",
-    "sensor",
-    "i2c",
-    "embedded",
-    "no-std",
-    "sen66",
-    "sen60",
-    "sen63c",
-    "sen65",
-    "sen66",
-    "sen68",
-]
+keywords = ["sen6x", "air-quality", "embedded", "no-std", "sen66"]
 categories = ["embedded", "no-std"]
 readme = "README.md"
 repository = "https://github.com/ducktec/sen6x-rs"
