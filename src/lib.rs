@@ -51,6 +51,36 @@
 
 #![cfg_attr(not(test), no_std)]
 
+// Ensure only one SEN6X sensor variant feature is enabled at a time
+#[cfg(feature = "sen60")]
+mod feature_check_sen60 {
+    #[cfg(any(
+        feature = "sen63c",
+        feature = "sen65",
+        feature = "sen66",
+        feature = "sen68"
+    ))]
+    compile_error!("Only one sensor variant feature can be enabled at a time");
+}
+
+#[cfg(feature = "sen63c")]
+mod feature_check_sen63c {
+    #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
+    compile_error!("Only one sensor variant feature can be enabled at a time");
+}
+
+#[cfg(feature = "sen65")]
+mod feature_check_sen65 {
+    #[cfg(any(feature = "sen66", feature = "sen68"))]
+    compile_error!("Only one sensor variant feature can be enabled at a time");
+}
+
+#[cfg(feature = "sen66")]
+mod feature_check_sen66 {
+    #[cfg(feature = "sen68")]
+    compile_error!("Only one sensor variant feature can be enabled at a time");
+}
+
 use crc_internal::CrcError;
 
 #[cfg(feature = "async")]
@@ -58,16 +88,16 @@ pub mod asynchronous;
 
 pub mod blocking;
 
-pub mod crc_internal;
+mod crc_internal;
 
 /// I2C address for the sensor module.
-pub const MODULE_ADDR: u8 = 0x6B;
+const MODULE_ADDR: u8 = 0x6B;
 
 /// Command ID enum.
 #[cfg(not(feature = "sen60"))]
 #[repr(u16)]
 #[derive(Copy, Clone, Debug)]
-pub enum CommandId {
+enum CommandId {
     StartContinuousMeasurement = 0x0021,
     StopMeasurement = 0x0104,
     GetDataReady = 0x0202,
@@ -117,7 +147,7 @@ pub enum CommandId {
 }
 
 /// Get execution time per command id
-pub fn get_execution_time(command: CommandId) -> u32 {
+fn get_execution_time(command: CommandId) -> u32 {
     match command {
         CommandId::StartContinuousMeasurement => 50,
         CommandId::StopMeasurement => 1000,
