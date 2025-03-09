@@ -111,3 +111,5 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 v0.1.0 - Initial release
 
 v0.1.1 - Fix keywords issue in `Cargo.toml`
+
+v0.1.2 - Improve documentation, fix doc.rs build issue, reduce `pub` visibility
