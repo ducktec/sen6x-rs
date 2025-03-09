@@ -113,3 +113,5 @@ v0.1.0 - Initial release
 v0.1.1 - Fix keywords issue in `Cargo.toml`
 
 v0.1.2 - Improve documentation, fix doc.rs build issue, reduce `pub` visibility
+
+v0.1.3 - Fix unit error for VOC and NOx (should be index points instead of ppb)

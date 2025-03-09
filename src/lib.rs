@@ -41,8 +41,8 @@
 //! | Humidity (%)                         | ✓      | ✓     | ✓     | ✓     |
 //! | Temperature (°C)                     | ✓      | ✓     | ✓     | ✓     |
 //! | CO2 (ppm)                           | ✓      | ✗     | ✓     | ✗     |
-//! | VOC (ppb)                           | ✗      | ✓     | ✓     | ✓     |
-//! | NOx (ppb)                           | ✗      | ✓     | ✓     | ✓     |
+//! | VOC (index points)                  | ✗      | ✓     | ✓     | ✓     |
+//! | NOx (index points)                  | ✗      | ✓     | ✓     | ✓     |
 //! | HCHO (ppb)                          | ✗      | ✗     | ✗     | ✓     |
 //!
 //! ## Raw Measurements by Variant
@@ -252,10 +252,10 @@ pub struct MeasuredSample {
     /// CO2 concentration in ppm
     #[cfg(any(feature = "sen63c", feature = "sen66"))]
     pub co2: u16,
-    /// VOC concentration in ppb
+    /// VOC concentration in index points
     #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub voc: f32,
-    /// NOX concentration in ppb
+    /// NOX concentration in index points
     #[cfg(any(feature = "sen65", feature = "sen66", feature = "sen68"))]
     pub nox: f32,
     /// Formaldehyde (HCHO) concentration in ppb
