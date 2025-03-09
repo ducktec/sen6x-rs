@@ -1,54 +1,89 @@
 //! This crate provides a platform agnostic no_std driver for the SEN6X sensor modules.
 //! The driver is compatible with the [`embedded-hal`](https://crates.io/crates/embedded-hal) traits.
 //!
-//! The data sheet of the sensor can be found [here](https://sensirion.com/resource/datasheet/SEN6x).
+//! The data sheet of the sensor modules can be found [here](https://sensirion.com/resource/datasheet/SEN6x).
 //!
-//! ## Supported features
-//! * Both blocking and async support
-//! * Start/stop continuous measurement mode
-//! * Check for availability of new measurement data
-//! * Get new measurement data (`struct`` containing characteristics per module variant)
-//! * Get new raw measurement data
-//! * Configure device (advanced use):
-//!     * set temperature offset,
-//!     * set temperature acceleration,
-//!     * get/set sensor altitude
-//!     * get/set ambient pressure
-//!     * get/set VOC/NOX algorithm tuning parameters
-//!     * get/set VOC algorithm state
-//!     * get product name (aka, variant)
-//!     * get serial number
-//!     * get/set co2 sensor auto calibration state
-//!     * get/clear device status
-//! * Control device (advanced use):
-//!     * reset device
-//!     * start fan cleaning
-//!     * activate SHT heater
-//!     * perform forced co2 recalibration
+//! ## Supported Features by Sensor Variant (Blocking & Async)
+//!
+//! Both blocking and async modes are implemented for the following functionality.
+//!
+//! | Functionality                        | SEN63C | SEN65 | SEN66 | SEN68 |
+//! |--------------------------------------|--------|-------|-------|-------|
+//! | Start/stop measurement               | ✓      | ✓     | ✓     | ✓     |
+//! | Get data ready status                | ✓      | ✓     | ✓     | ✓     |
+//! | Read measured values                 | ✓      | ✓     | ✓     | ✓     |
+//! | Read raw measured values             | ✓      | ✓     | ✓     | ✓     |
+//! | Read number concentration values     | ✓      | ✓     | ✓     | ✓     |
+//! | Set temperature offset parameters    | ✓      | ✓     | ✓     | ✓     |
+//! | Set temperature acceleration         | ✓      | ✓     | ✓     | ✓     |
+//! | Get product name                     | ✓      | ✓     | ✓     | ✓     |
+//! | Get serial number                    | ✓      | ✓     | ✓     | ✓     |
+//! | Read/clear device status             | ✓      | ✓     | ✓     | ✓     |
+//! | Device reset                         | ✓      | ✓     | ✓     | ✓     |
+//! | Fan cleaning                         | ✓      | ✓     | ✓     | ✓     |
+//! | Activate SHT heater                  | ✓      | ✓     | ✓     | ✓     |
+//! | VOC algorithm tuning parameters      | ✗      | ✓     | ✓     | ✓     |
+//! | VOC algorithm state                  | ✗      | ✓     | ✓     | ✓     |
+//! | NOx algorithm tuning parameters      | ✗      | ✓     | ✓     | ✓     |
+//! | Forced CO2 recalibration             | ✓      | ✗     | ✓     | ✗     |
+//! | CO2 sensor auto calibration          | ✓      | ✗     | ✓     | ✗     |
+//! | Set/get ambient pressure             | ✓      | ✗     | ✓     | ✗     |
+//! | Set/get sensor altitude              | ✓      | ✗     | ✓     | ✗     |
+//!
+//! ## Sensor Measurements by Variant
+//!
+//! | Measurement                          | SEN63C | SEN65 | SEN66 | SEN68 |
+//! |--------------------------------------|--------|-------|-------|-------|
+//! | PM1.0 (µg/m³)                       | ✓      | ✓     | ✓     | ✓     |
+//! | PM2.5 (µg/m³)                       | ✓      | ✓     | ✓     | ✓     |
+//! | PM4.0 (µg/m³)                       | ✓      | ✓     | ✓     | ✓     |
+//! | PM10 (µg/m³)                        | ✓      | ✓     | ✓     | ✓     |
+//! | Humidity (%)                         | ✓      | ✓     | ✓     | ✓     |
+//! | Temperature (°C)                     | ✓      | ✓     | ✓     | ✓     |
+//! | CO2 (ppm)                           | ✓      | ✗     | ✓     | ✗     |
+//! | VOC (ppb)                           | ✗      | ✓     | ✓     | ✓     |
+//! | NOx (ppb)                           | ✗      | ✓     | ✓     | ✓     |
+//! | HCHO (ppb)                          | ✗      | ✗     | ✗     | ✓     |
+//!
+//! ## Raw Measurements by Variant
+//!
+//! | Raw Measurement                      | SEN63C | SEN65 | SEN66 | SEN68 |
+//! |--------------------------------------|--------|-------|-------|-------|
+//! | Raw humidity                         | ✓      | ✓     | ✓     | ✓     |
+//! | Raw temperature                      | ✓      | ✓     | ✓     | ✓     |
+//! | Raw VOC ticks                        | ✗      | ✓     | ✓     | ✓     |
+//! | Raw NOx ticks                        | ✗      | ✓     | ✓     | ✓     |
+//! | Raw CO2                              | ✗      | ✗     | ✓     | ✗     |
 //!
 //! ## Supported sensor variants
-//! * SEN63C
-//! * SEN65
-//! * SEN66
-//! * SEN68
+//!
+//! <div class="warning">This generated documentation covers the SEN66 variant (default feature). For any other
+//! variant, please consult the source code. The same functions should be available (if the variant supports that functionality), but the
+//! sample data returned will contain different characteristics.</div>
+//!
+//! * SEN63C (crate feature `sen63c`)
+//! * SEN65 (crate feature `sen65`)
+//! * SEN66 (crate feature `sen66`, default)
+//! * SEN68 (crate feature `sen68`)
+//!
+//! The sensor variants are mutually exclusive. Only one sensor variant feature can be enabled at a time.
+//! To activate a sensor variant other than the default SEN66, disable the default feature and enable the desired sensor variant feature.
+//!
 //!
 //! ## Currently unsupported sensor variants
-//! * SEN60 (substantially different data formats)
+//! * SEN60 (substantially different command set)
 //!
 //! ## Usage
 //!
-//! By default, the driver is in blocking mode. To use the driver in async mode, enable the `async` feature.
+//! By default, the driver is in blocking mode. To access the async mode variant, enable the `async` feature.
 //!
 //! The documentation and examples of both modes can be found in the respective modules `blocking` and `async`.
 //!
 //! ## Unit tests
-//! The unit tests are only working with a specific feature flag enabled. To run the tests, use the following command:
-//! ```sh
-//! cargo test
+//! To run the extensive unit tests, use the following command:
+//! ```bash
+//! cargo xtask test-features
 //! ```
-//! The reason for the feature flag is that the mock hal implementation is not `no_std` and thus cannot be part of a build for
-//! a `no_std` target.
-
 #![cfg_attr(not(test), no_std)]
 
 // Ensure only one SEN6X sensor variant feature is enabled at a time

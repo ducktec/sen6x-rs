@@ -26,6 +26,8 @@ All described features are supported both in blocking as well as async mode.
 * Fan Cleaning
 * Activate SHT heater
 
+Please see the doc.rs documentation for a feature matrix of the supported features for each module variant.
+
 ## Unsupported features
 
 * The SEN-60 variant is not yet supported (it has a substantially different command set), but may be added in the future
@@ -38,7 +40,12 @@ For development, it uses the `embedded-hal-mock` crate for mocking the hardware 
 
 ## Usage
 
-To use this driver, add the following to your `Cargo.toml` file:
+> [!WARNING]  
+> The sensor variant features are mutually exclusive. Only one sensor variant feature can be enabled at a time.
+> To activate a sensor variant other than the default SEN66, disable the default feature and enable the desired
+> sensor variant feature. data returned will contain different characteristics.
+
+To use this driver with the SEN66 variant (default), add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
@@ -82,7 +89,7 @@ The library provides extensive unit tests for all features. To run the tests for
 cargo xtask test-features
 ```
 
-This library was tested so far (using the example) on a Raspberry Pi Pico 2W and an engineering sample of the SEN-66 module directly connected to the Pico.
+This library was tested so far (using the examples) on a Raspberry Pi Pico 2W and an directly connected engineering sample of the SEN-66 module.
 
 ## Examples
 Basic example reading for sensor values are available in the [`examples-rp2350`](https://github.com/ducktec/sen6x-rs/tree/main/examples-rp2350) directory of the source code repository. Follow the instructions in the README.md in that directory to run the examples on a Raspberry Pi Pico 2/2W.
@@ -102,4 +109,5 @@ Unless you explicitly state otherwise, any contribution intentionally submitted 
 # Changelog
 
 v0.1.0 - Initial release
+
 v0.1.1 - Fix keywords issue in `Cargo.toml`
