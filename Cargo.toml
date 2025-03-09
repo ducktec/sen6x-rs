@@ -36,5 +36,4 @@ sen66 = []
 sen68 = []
 
 [package.metadata.docs.rs]
-# Show async feature on docs.rs as well
-all-features = true
+features = ["async"]
