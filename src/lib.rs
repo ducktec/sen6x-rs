@@ -84,7 +84,7 @@
 //! ```bash
 //! cargo xtask test-features
 //! ```
-#![cfg_attr(not(test), no_std)]
+#![cfg_attr(all(not(test), not(feature = "std")), no_std)]
 
 // Ensure only one SEN6X sensor variant feature is enabled at a time
 #[cfg(feature = "sen60")]
@@ -212,18 +212,40 @@ type Result<T> = core::result::Result<T, Sen6xError>;
 /// Represents any error that may happen during communication.
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "std", derive(thiserror::Error))]
 pub enum Sen6xError {
     /// An error occurred while reading from the module.
+    #[cfg_attr(
+        feature = "std",
+        error("An error occurred while reading from the SEN6x module")
+    )]
     ReadI2CError,
     /// An error occurred while writing to the module.
+    #[cfg_attr(
+        feature = "std",
+        error("An error occurred while writing to the SEN6x module")
+    )]
     WriteI2CError,
     /// The sensor module is in a state that does not permit this command
+    #[cfg_attr(
+        feature = "std",
+        error("The SEN6x module is in a state that does not permit this command")
+    )]
     InvalidState,
     /// The sensor module returned data which could not be parsed
+    #[cfg_attr(
+        feature = "std",
+        error("The SEN6x module returned data which could not be parsed")
+    )]
     InvalidData,
     /// Too much data was provided to the driver implementation
+    #[cfg_attr(
+        feature = "std",
+        error("The SEN6x module provided toto much data to the driver implementation")
+    )]
     TooMuchData,
     /// CRC related error
+    #[cfg_attr(feature = "std", error("CRC failure on SEN6x data"))]
     CrcError(CrcError),
 }
 
