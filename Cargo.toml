@@ -18,6 +18,7 @@ documentation = "https://docs.rs/sen6x"
 embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
 defmt = { version = "0.3.10", optional = true }
+serde = { version = "1.0.219", features = ["derive"], optional = true }
 
 [dev-dependencies]
 embedded-hal-mock = { version = "0.11.1", features = ["embedded-hal-async"] }
@@ -34,6 +35,7 @@ sen63c = []
 sen65 = []
 sen66 = []
 sen68 = []
+serde = ["dep:serde"]
 
 [package.metadata.docs.rs]
 features = ["async"]
