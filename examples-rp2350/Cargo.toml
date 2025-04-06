@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-sen6x = { path = "../", features = ["async"] }
+sen6x = { path = "../", features = ["async", "defmt"] }
 
 embassy-embedded-hal = { version = "0.3.0", git = "https://github.com/embassy-rs/embassy.git", rev = "17301c0", features = [
     "defmt",

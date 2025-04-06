@@ -23,6 +23,6 @@ jobs:
     - name: Run unit tests
       run: cargo xtask test-features
     - name: Build samples
-      run: cargo build --package examples-rp2350 --bins --target thumbv8m.main-none-eabihf --features defmt
+      run: cargo build --package examples-rp2350 --bins --target thumbv8m.main-none-eabihf
     - name: Build documentation
       run: cargo rustdoc --features async
