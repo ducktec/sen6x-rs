@@ -30,7 +30,7 @@ futures = { version = "0.3.31" }
 log = "0.4.20"
 
 [features]
-default = ["sen66", "defmt"]
+default = ["sen66"]
 defmt = ["dep:defmt"]
 async = []
 sen60 = []
