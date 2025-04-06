@@ -3,7 +3,7 @@ members = ["examples-rp2350", "xtask"]
 
 [package]
 name = "sen6x"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 authors = ["Robert Wiewel <dev@ducktec.de>"]
