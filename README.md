@@ -1,6 +1,6 @@
 # SEN6x Rust Driver
 
-A Rust `no-std` driver for the SEN6x environmental sensor nodes for air quality applications.
+A Rust `no-std`/`std` driver for the SEN6x environmental sensor nodes for air quality applications.
 
 [![Crates.io](https://img.shields.io/crates/v/sen6x.svg)](https://crates.io/crates/sen6x)
 [![Docs.rs](https://docs.rs/sen6x/badge.svg)](https://docs.rs/sen6x)
@@ -31,6 +31,13 @@ Please see the doc.rs documentation for a feature matrix of the supported featur
 ## Unsupported features
 
 * The SEN-60 variant is not yet supported (it has a substantially different command set), but may be added in the future
+
+## Rust Features
+* `async` *(default)*: Enables async capabilities of the driver
+* `defmt`: Enables the `defmt::Format` trait for the `defmt` logging framework (adds `defmt` crate as dependency)
+* `serde`: Enables `serde` support for the driver (adds `serde` crate as dependency, with default features disabled for `no-std` compatibility)
+* `std`: Enables `std` functionality of the driver (unlocks `thiserror` error macros)
+* `sen60`/`sen63`/`sen65`/`sen66` *(default)* /`sen68`: Enables support for the respective sensor variant. Only one of these features can be enabled at a time. The variant enabled by default is `sen66`.
 
 ## Dependencies
 
@@ -115,3 +122,5 @@ v0.1.1 - Fix keywords issue in `Cargo.toml`
 v0.1.2 - Improve documentation, fix doc.rs build issue, reduce `pub` visibility
 
 v0.1.3 - Fix unit error for VOC and NOx (should be index points instead of ppb)
+
+v0.1.4 - Serde support (for samples), derive `Clone` for sample, add `std` feature to allow for `thiserror` convenience (all thanks to @sbruton)

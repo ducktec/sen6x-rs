@@ -73,6 +73,13 @@
 //! ## Currently unsupported sensor variants
 //! * SEN60 (substantially different command set)
 //!
+//! ## Rust Features
+//! * `async` *(default)*: Enables async support portion of the driver
+//! * `defmt`: Enables the `defmt::Format` trait for the `defmt` logging framework (adds `defmt` crate as dependency)
+//! * `serde`: Enables `serde` support for the driver (adds `serde` crate as dependency, with default features disabled for `no-std` compatibility)
+//! * `std`: Enables `std` functionality of the driver (unlocks `thiserror` error macros)
+//! * `sen60`/`sen63`/`sen65`/`sen66` *(default)* /`sen68`: Enables support for the respective sensor variant. Only one of these features can be enabled at a time. The variant enabled by default is `sen66`.
+//!
 //! ## Usage
 //!
 //! By default, the driver is in blocking mode. To access the async mode variant, enable the `async` feature.
