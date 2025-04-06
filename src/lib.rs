@@ -258,6 +258,7 @@ impl From<CrcError> for Sen6xError {
 /// Represents a measured sample from the sensor module.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct MeasuredSample {
     /// PM1 concentration in µg/m³
     pub pm1: f32,
